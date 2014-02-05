@@ -262,7 +262,7 @@ class CardTableModRefBS: public ModRefBarrierSet {
 public:
   // Constants
   enum SomePublicConstants {
-    card_shift                  = 9,
+    card_shift                  = 12,
     card_size                   = 1 << card_shift,
     card_size_in_words          = card_size / sizeof(HeapWord)
   };
