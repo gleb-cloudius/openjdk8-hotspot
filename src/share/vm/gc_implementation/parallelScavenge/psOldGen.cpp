@@ -32,6 +32,7 @@
 #include "memory/gcLocker.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
+#include "mman.hpp"
 
 inline const char* PSOldGen::select_name() {
   return UseParallelOldGC ? "ParOldGen" : "PSOldGen";
@@ -68,9 +69,14 @@ void PSOldGen::initialize(ReservedSpace rs, size_t alignment,
 void PSOldGen::initialize_virtual_space(ReservedSpace rs, size_t alignment) {
 
   _virtual_space = new PSVirtualSpace(rs, alignment);
+  char* const base_addr = virtual_space()->committed_high_addr();
   if (!_virtual_space->expand_by(_init_gen_size)) {
     vm_exit_during_initialization("Could not reserve enough space for "
                                   "object heap");
+  }
+  char *base = (char*)mmu::map_anon(base_addr, _init_gen_size, mmu::mmap_small | mmu::mmap_fixed, mmu::perm_rw);
+  if (base != base_addr) {
+    vm_exit_during_initialization("Could not relocate small page heap\n");
   }
 }
 
@@ -268,7 +274,15 @@ bool PSOldGen::expand_by(size_t bytes) {
   if (bytes == 0) {
     return true;  // That's what virtual_space()->expand_by(0) would return
   }
+  char* const base_addr = virtual_space()->committed_high_addr();
   bool result = virtual_space()->expand_by(bytes);
+  if (result) {
+    char *base = (char*)mmu::map_anon(base_addr, bytes, mmu::mmap_small | mmu::mmap_fixed, mmu::perm_rw);
+    if (base != base_addr) {
+      printf("mmap_anon failed in PSOldGen::expand_by\n");
+      result = false;
+    }
+  }
   if (result) {
     if (ZapUnusedHeapArea) {
       // We need to mangle the newly expanded area. The memregion spans

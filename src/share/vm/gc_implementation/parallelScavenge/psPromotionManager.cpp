@@ -84,6 +84,7 @@ void PSPromotionManager::pre_scavenge() {
   for(uint i=0; i<ParallelGCThreads+1; i++) {
     manager_array(i)->reset();
   }
+  ((CardTableExtension*)heap->barrier_set())->pt_scan(heap->old_gen()->object_space());
 }
 
 bool PSPromotionManager::post_scavenge(YoungGCTracer& gc_tracer) {

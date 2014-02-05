@@ -30,6 +30,7 @@
 #include "gc_implementation/parallelScavenge/psYoungGen.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.psgc.inline.hpp"
+#include "mman.hpp"
 
 // Checks an individual oop for missing precise marks. Mark
 // may be either dirty or newgen.
@@ -497,6 +498,14 @@ void CardTableExtension::resize_covered_region_by_end(int changed_region,
                   addr_for((jbyte*) _committed[ind].last()));
   }
   debug_only(verify_guard();)
+}
+
+void CardTableExtension::pt_scan(MutableSpace *sp)
+{
+  if (sp->is_empty())
+    return;
+  sync_dirty dirty(byte_for(sp->bottom()));
+  mmu::mgetdirty(sp->bottom(), sp->used_in_bytes(), dirty);
 }
 
 bool CardTableExtension::resize_commit_uncommit(int changed_region,

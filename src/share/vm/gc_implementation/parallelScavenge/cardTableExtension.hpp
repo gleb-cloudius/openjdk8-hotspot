@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_IMPLEMENTATION_PARALLELSCAVENGE_CARDTABLEEXTENSION_HPP
 
 #include "memory/cardTableModRefBS.hpp"
+#include "mman.hpp"
 
 class MutableSpace;
 class ObjectStartArray;
@@ -46,6 +47,16 @@ class CardTableExtension : public CardTableModRefBS {
  protected:
 
   static void verify_all_young_refs_precise_helper(MemRegion mr);
+
+  class sync_dirty : public mmu::dirty_bit_handle {
+  private:
+    jbyte *_card;
+  public:
+    sync_dirty(jbyte *card) : _card(card) {}
+    virtual void operator()(uint64_t addr, uintptr_t offset) {
+      *(_card + offset/4096) = dirty_card;
+    }
+  };
 
  public:
   enum ExtendedCardValue {
@@ -71,6 +82,7 @@ class CardTableExtension : public CardTableModRefBS {
   static void verify_all_young_refs_imprecise();
   static void verify_all_young_refs_precise();
 
+  void pt_scan(MutableSpace *sp);
   bool addr_is_marked_imprecise(void *addr);
   bool addr_is_marked_precise(void *addr);
 
