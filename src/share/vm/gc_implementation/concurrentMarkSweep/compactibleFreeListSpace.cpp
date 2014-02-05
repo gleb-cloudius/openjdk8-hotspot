@@ -647,19 +647,19 @@ class FreeListSpace_DCTOC : public Filtering_DCTOC {
   CMSCollector* _collector;
 protected:
   // Override.
-#define walk_mem_region_with_cl_DECL(ClosureType)                       \
-  virtual void walk_mem_region_with_cl(MemRegion mr,                    \
-                                       HeapWord* bottom, HeapWord* top, \
-                                       ClosureType* cl);                \
-      void walk_mem_region_with_cl_par(MemRegion mr,                    \
-                                       HeapWord* bottom, HeapWord* top, \
-                                       ClosureType* cl);                \
-    void walk_mem_region_with_cl_nopar(MemRegion mr,                    \
-                                       HeapWord* bottom, HeapWord* top, \
-                                       ClosureType* cl)
-  walk_mem_region_with_cl_DECL(ExtendedOopClosure);
-  walk_mem_region_with_cl_DECL(FilteringClosure);
-
+  template<class T> inline void walk_mem_region_with_cl_tmpl(MemRegion mr,
+                                       HeapWord* bottom, HeapWord* top,
+                                       T* cl);
+  template<class T> void walk_mem_region_with_cl_par(MemRegion mr,
+                                       HeapWord* bottom, HeapWord* top,
+                                       T* cl);
+  template<class T> void walk_mem_region_with_cl_nopar(MemRegion mr,
+                                       HeapWord* bottom, HeapWord* top,
+                                       T* cl);
+  virtual void walk_mem_region_with_cl(MemRegion mr, HeapWord* bottom,
+      HeapWord* top, ExtendedOopClosure* cl);
+  virtual void walk_mem_region_with_cl(MemRegion mr, HeapWord* bottom,
+      HeapWord* top, FilteringClosure* cl);
 public:
   FreeListSpace_DCTOC(CompactibleFreeListSpace* sp,
                       CMSCollector* collector,
@@ -673,80 +673,87 @@ public:
 // We de-virtualize the block-related calls below, since we know that our
 // space is a CompactibleFreeListSpace.
 
-#define FreeListSpace_DCTOC__walk_mem_region_with_cl_DEFN(ClosureType)          \
-void FreeListSpace_DCTOC::walk_mem_region_with_cl(MemRegion mr,                 \
-                                                 HeapWord* bottom,              \
-                                                 HeapWord* top,                 \
-                                                 ClosureType* cl) {             \
-   bool is_par = SharedHeap::heap()->n_par_threads() > 0;                       \
-   if (is_par) {                                                                \
-     assert(SharedHeap::heap()->n_par_threads() ==                              \
-            SharedHeap::heap()->workers()->active_workers(), "Mismatch");       \
-     walk_mem_region_with_cl_par(mr, bottom, top, cl);                          \
-   } else {                                                                     \
-     walk_mem_region_with_cl_nopar(mr, bottom, top, cl);                        \
-   }                                                                            \
-}                                                                               \
-void FreeListSpace_DCTOC::walk_mem_region_with_cl_par(MemRegion mr,             \
-                                                      HeapWord* bottom,         \
-                                                      HeapWord* top,            \
-                                                      ClosureType* cl) {        \
-  /* Skip parts that are before "mr", in case "block_start" sent us             \
-     back too far. */                                                           \
-  HeapWord* mr_start = mr.start();                                              \
-  size_t bot_size = _cfls->CompactibleFreeListSpace::block_size(bottom);        \
-  HeapWord* next = bottom + bot_size;                                           \
-  while (next < mr_start) {                                                     \
-    bottom = next;                                                              \
-    bot_size = _cfls->CompactibleFreeListSpace::block_size(bottom);             \
-    next = bottom + bot_size;                                                   \
-  }                                                                             \
-                                                                                \
-  while (bottom < top) {                                                        \
-    if (_cfls->CompactibleFreeListSpace::block_is_obj(bottom) &&                \
-        !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(       \
-                    oop(bottom)) &&                                             \
-        !_collector->CMSCollector::is_dead_obj(oop(bottom))) {                  \
-      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);                        \
-      bottom += _cfls->adjustObjectSize(word_sz);                               \
-    } else {                                                                    \
-      bottom += _cfls->CompactibleFreeListSpace::block_size(bottom);            \
-    }                                                                           \
-  }                                                                             \
-}                                                                               \
-void FreeListSpace_DCTOC::walk_mem_region_with_cl_nopar(MemRegion mr,           \
-                                                        HeapWord* bottom,       \
-                                                        HeapWord* top,          \
-                                                        ClosureType* cl) {      \
-  /* Skip parts that are before "mr", in case "block_start" sent us             \
-     back too far. */                                                           \
-  HeapWord* mr_start = mr.start();                                              \
-  size_t bot_size = _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);  \
-  HeapWord* next = bottom + bot_size;                                           \
-  while (next < mr_start) {                                                     \
-    bottom = next;                                                              \
-    bot_size = _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);       \
-    next = bottom + bot_size;                                                   \
-  }                                                                             \
-                                                                                \
-  while (bottom < top) {                                                        \
-    if (_cfls->CompactibleFreeListSpace::block_is_obj_nopar(bottom) &&          \
-        !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(       \
-                    oop(bottom)) &&                                             \
-        !_collector->CMSCollector::is_dead_obj(oop(bottom))) {                  \
-      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);                        \
-      bottom += _cfls->adjustObjectSize(word_sz);                               \
-    } else {                                                                    \
-      bottom += _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);      \
-    }                                                                           \
-  }                                                                             \
+template<class T> inline void FreeListSpace_DCTOC::walk_mem_region_with_cl_tmpl(MemRegion mr,
+                                                 HeapWord* bottom,
+                                                 HeapWord* top,
+                                                 T* cl) {
+   bool is_par = SharedHeap::heap()->n_par_threads() > 0;
+   if (is_par) {
+     assert(SharedHeap::heap()->n_par_threads() ==
+            SharedHeap::heap()->workers()->active_workers(), "Mismatch");
+     walk_mem_region_with_cl_par(mr, bottom, top, cl);
+   } else {
+     walk_mem_region_with_cl_nopar(mr, bottom, top, cl);
+   }
 }
 
-// (There are only two of these, rather than N, because the split is due
-// only to the introduction of the FilteringClosure, a local part of the
-// impl of this abstraction.)
-FreeListSpace_DCTOC__walk_mem_region_with_cl_DEFN(ExtendedOopClosure)
-FreeListSpace_DCTOC__walk_mem_region_with_cl_DEFN(FilteringClosure)
+template<class T> void FreeListSpace_DCTOC::walk_mem_region_with_cl_par(MemRegion mr,
+                                                      HeapWord* bottom,
+                                                      HeapWord* top,
+                                                      T* cl) {
+  /* Skip parts that are before "mr", in case "block_start" sent us
+     back too far. */
+  HeapWord* mr_start = mr.start();
+  size_t bot_size = _cfls->CompactibleFreeListSpace::block_size(bottom);
+  HeapWord* next = bottom + bot_size;
+  while (next < mr_start) {
+    bottom = next;
+    bot_size = _cfls->CompactibleFreeListSpace::block_size(bottom);
+    next = bottom + bot_size;
+  }
+
+  while (bottom < top) {
+    if (_cfls->CompactibleFreeListSpace::block_is_obj(bottom) &&
+        !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(
+                    oop(bottom)) &&
+        !_collector->CMSCollector::is_dead_obj(oop(bottom))) {
+      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);
+      bottom += _cfls->adjustObjectSize(word_sz);
+    } else {
+      bottom += _cfls->CompactibleFreeListSpace::block_size(bottom);
+    }
+  }
+}
+
+template<class T> void FreeListSpace_DCTOC::walk_mem_region_with_cl_nopar(MemRegion mr,
+                                                        HeapWord* bottom,
+                                                        HeapWord* top,
+                                                        T* cl) {
+  /* Skip parts that are before "mr", in case "block_start" sent us
+     back too far. */
+  HeapWord* mr_start = mr.start();
+  size_t bot_size = _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);
+  HeapWord* next = bottom + bot_size;
+  while (next < mr_start) {
+    bottom = next;
+    bot_size = _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);
+    next = bottom + bot_size;
+  }
+
+  while (bottom < top) {
+    if (_cfls->CompactibleFreeListSpace::block_is_obj_nopar(bottom) &&
+        !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(
+                    oop(bottom)) &&
+        !_collector->CMSCollector::is_dead_obj(oop(bottom))) {
+      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);
+      bottom += _cfls->adjustObjectSize(word_sz);
+    } else {
+      bottom += _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);
+    }
+  }
+}
+
+void FreeListSpace_DCTOC::walk_mem_region_with_cl(MemRegion mr, HeapWord* bottom,
+    HeapWord* top, ExtendedOopClosure* cl)
+{
+  walk_mem_region_with_cl_tmpl(mr, bottom, top, cl);
+}
+
+void FreeListSpace_DCTOC::walk_mem_region_with_cl(MemRegion mr, HeapWord* bottom,
+    HeapWord* top, FilteringClosure* cl)
+{
+  walk_mem_region_with_cl_tmpl(mr, bottom, top, cl);
+}
 
 DirtyCardToOopClosure*
 CompactibleFreeListSpace::new_dcto_cl(ExtendedOopClosure* cl,
