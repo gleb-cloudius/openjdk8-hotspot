@@ -111,6 +111,7 @@ class ScanClosure: public OopsInKlassOrGenClosure {
   template <class T> inline void do_oop_work(T* p);
  public:
   ScanClosure(DefNewGeneration* g, bool gc_barrier);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p);
@@ -133,6 +134,7 @@ class FastScanClosure: public OopsInKlassOrGenClosure {
   template <class T> inline void do_oop_work(T* p);
  public:
   FastScanClosure(DefNewGeneration* g, bool gc_barrier);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p);
@@ -170,6 +172,7 @@ class FilteringClosure: public ExtendedOopClosure {
   FilteringClosure(HeapWord* boundary, ExtendedOopClosure* cl) :
     ExtendedOopClosure(cl->_ref_processor), _boundary(boundary),
     _cl(cl) {}
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { FilteringClosure::do_oop_work(p); }

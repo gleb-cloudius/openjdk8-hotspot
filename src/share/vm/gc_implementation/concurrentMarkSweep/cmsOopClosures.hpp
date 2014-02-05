@@ -177,6 +177,7 @@ class PushAndMarkClosure: public CMSOopClosure {
                      CMSBitMap* mod_union_table,
                      CMSMarkStack* mark_stack,
                      bool concurrent_precleaning);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { PushAndMarkClosure::do_oop_work(p); }
@@ -207,6 +208,7 @@ class Par_PushAndMarkClosure: public CMSOopClosure {
                          ReferenceProcessor* rp,
                          CMSBitMap* bit_map,
                          OopTaskQueue* work_queue);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { Par_PushAndMarkClosure::do_oop_work(p); }
@@ -240,6 +242,7 @@ class MarkRefsIntoAndScanClosure: public CMSOopsInGenClosure {
                              CMSCollector* collector,
                              bool should_yield,
                              bool concurrent_precleaning);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { MarkRefsIntoAndScanClosure::do_oop_work(p); }
@@ -277,6 +280,7 @@ class Par_MarkRefsIntoAndScanClosure: public CMSOopsInGenClosure {
                                  ReferenceProcessor* rp,
                                  CMSBitMap* bit_map,
                                  OopTaskQueue* work_queue);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { Par_MarkRefsIntoAndScanClosure::do_oop_work(p); }
@@ -309,6 +313,7 @@ class PushOrMarkClosure: public CMSOopClosure {
                     CMSMarkStack* markStack,
                     HeapWord* finger,
                     MarkFromRootsClosure* parent);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { PushOrMarkClosure::do_oop_work(p); }
@@ -347,6 +352,7 @@ class Par_PushOrMarkClosure: public CMSOopClosure {
                         HeapWord* finger,
                         HeapWord** global_finger_addr,
                         Par_MarkFromRootsClosure* parent);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { Par_PushOrMarkClosure::do_oop_work(p); }
@@ -377,6 +383,7 @@ class CMSKeepAliveClosure: public CMSOopClosure {
   CMSKeepAliveClosure(CMSCollector* collector, MemRegion span,
                       CMSBitMap* bit_map, CMSMarkStack* mark_stack,
                       bool cpc);
+  static const bool oop_virt_iter = false;
   bool    concurrent_precleaning() const { return _concurrent_precleaning; }
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
@@ -396,6 +403,7 @@ class CMSInnerParMarkAndPushClosure: public CMSOopClosure {
   CMSInnerParMarkAndPushClosure(CMSCollector* collector,
                                 MemRegion span, CMSBitMap* bit_map,
                                 OopTaskQueue* work_queue);
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p)       { CMSInnerParMarkAndPushClosure::do_oop_work(p); }

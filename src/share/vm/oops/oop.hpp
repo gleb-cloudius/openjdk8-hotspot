@@ -335,22 +335,11 @@ class oopDesc {
   static BarrierSet* bs()            { return _bs; }
   static void set_bs(BarrierSet* bs) { _bs = bs; }
 
-  // iterators, returns size of object
-#define OOP_ITERATE_DECL(OopClosureType, nv_suffix)                      \
-  int oop_iterate(OopClosureType* blk);                                  \
-  int oop_iterate(OopClosureType* blk, MemRegion mr);  // Only in mr.
+  template<class T> int oop_iterate(T* blk);
+  template<class T> int oop_iterate(T* blk, MemRegion mr);
 
-  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL)
-  ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_DECL)
-
-#if INCLUDE_ALL_GCS
-
-#define OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix)            \
-  int oop_iterate_backwards(OopClosureType* blk);
-
-  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_BACKWARDS_DECL)
-  ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_BACKWARDS_DECL)
-#endif
+  template<class T> int oop_iterate_backwards(T* blk);
+  template<class T> int oop_iterate_backwards(T* blk, MemRegion mr);
 
   int oop_iterate_no_header(OopClosure* bk);
   int oop_iterate_no_header(OopClosure* bk, MemRegion mr);

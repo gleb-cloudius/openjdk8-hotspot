@@ -696,19 +696,6 @@ inline int oopDesc::adjust_pointers() {
   return s;
 }
 
-#define OOP_ITERATE_DEFN(OopClosureType, nv_suffix)                        \
-                                                                           \
-inline int oopDesc::oop_iterate(OopClosureType* blk) {                     \
-  SpecializationStats::record_call();                                      \
-  return klass()->oop_oop_iterate##nv_suffix(this, blk);               \
-}                                                                          \
-                                                                           \
-inline int oopDesc::oop_iterate(OopClosureType* blk, MemRegion mr) {       \
-  SpecializationStats::record_call();                                      \
-  return klass()->oop_oop_iterate##nv_suffix##_m(this, blk, mr);       \
-}
-
-
 inline int oopDesc::oop_iterate_no_header(OopClosure* blk) {
   // The NoHeaderExtendedOopClosure wraps the OopClosure and proxies all
   // the do_oop calls, but turns off all other features in ExtendedOopClosure.
@@ -721,19 +708,58 @@ inline int oopDesc::oop_iterate_no_header(OopClosure* blk, MemRegion mr) {
   return oop_iterate(&cl, mr);
 }
 
-ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DEFN)
-ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_DEFN)
+template<class T, bool> struct oop_iterate_impl;
+template<class T> struct oop_iterate_impl<T, true> {
+  int operator()(oopDesc *o, T *blk) {
+    o->klass()->oop_oop_iterate_v(o, blk);
+  }
+  int operator()(oopDesc *o, T *blk, MemRegion mr) {
+    o->klass()->oop_oop_iterate_v_m(o, blk, mr);
+  }
+};
 
-#if INCLUDE_ALL_GCS
-#define OOP_ITERATE_BACKWARDS_DEFN(OopClosureType, nv_suffix)              \
-                                                                           \
-inline int oopDesc::oop_iterate_backwards(OopClosureType* blk) {           \
-  SpecializationStats::record_call();                                      \
-  return klass()->oop_oop_iterate_backwards##nv_suffix(this, blk);     \
+template<class T, bool> struct oop_iterate_impl;
+template<class T> struct oop_iterate_impl<T, false> {
+  int operator()(oopDesc *o, T *blk) {
+    return o->klass()->oop_oop_iterate_nv(o, blk);
+  }
+  int operator()(oopDesc *o, T *blk, MemRegion mr) {
+    return o->klass()->oop_oop_iterate_nv_m(o, blk, mr);
+  }
+};
+
+template<class T, bool> struct oop_iterate_backwards_impl;
+template<class T> struct oop_iterate_backwards_impl<T, true> {
+  int operator()(oopDesc *o, T *blk) {
+    return o->klass()->oop_oop_iterate_backwards_v(o, blk);
+  }
+};
+
+template<class T, bool> struct oop_iterate_backwards_impl;
+template<class T> struct oop_iterate_backwards_impl<T, false> {
+  int operator()(oopDesc *o, T *blk) {
+    o->klass()->oop_oop_iterate_backwards_nv(o, blk);
+  }
+};
+
+template<class T> inline int oopDesc::oop_iterate(T* blk) {
+  SpecializationStats::record_call();
+  oop_iterate_impl<T, T::oop_virt_iter> impl;
+  return impl(this, blk);
 }
 
-ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_BACKWARDS_DEFN)
-ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_BACKWARDS_DEFN)
+template<class T> inline int oopDesc::oop_iterate(T* blk, MemRegion mr) {
+  SpecializationStats::record_call();
+  oop_iterate_impl<T, T::oop_virt_iter> impl;
+  return impl(this, blk, mr);
+}
+
+#if INCLUDE_ALL_GCS
+template<class T> inline int oopDesc::oop_iterate_backwards(T* blk) {
+  SpecializationStats::record_call();
+  oop_iterate_backwards_impl<T, T::oop_virt_iter> impl;
+  return impl(this, blk);
+}
 #endif // INCLUDE_ALL_GCS
 
 #endif // SHARE_VM_OOPS_OOP_INLINE_HPP

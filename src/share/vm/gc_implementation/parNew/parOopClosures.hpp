@@ -54,6 +54,7 @@ class ParScanWithBarrierClosure: public ParScanClosure {
   ParScanWithBarrierClosure(ParNewGeneration* g,
                             ParScanThreadState* par_scan_state) :
     ParScanClosure(g, par_scan_state) {}
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p);
@@ -65,6 +66,7 @@ class ParScanWithoutBarrierClosure: public ParScanClosure {
   ParScanWithoutBarrierClosure(ParNewGeneration* g,
                                ParScanThreadState* par_scan_state) :
     ParScanClosure(g, par_scan_state) {}
+  static const bool oop_virt_iter = false;
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
   inline void do_oop_nv(oop* p);

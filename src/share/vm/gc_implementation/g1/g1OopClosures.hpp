@@ -65,6 +65,7 @@ public:
                          G1ParScanThreadState* par_scan_state):
     G1ParClosureSuper(g1, par_scan_state) { }
 
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)          { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)    { do_oop_nv(p); }
@@ -78,7 +79,7 @@ public:
     assert(_ref_processor == NULL, "sanity");
     _ref_processor = rp;
   }
-
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)          { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)    { do_oop_nv(p); }
@@ -156,7 +157,7 @@ public:
       G1ParCopyHelper(g1, par_scan_state) {
     assert(_ref_processor == NULL, "sanity");
   }
-
+  static const bool oop_virt_iter = false;
   G1ParScanClosure* scanner() { return &_scanner; }
 
   template <class T> void do_oop_nv(T* p) {
@@ -201,6 +202,7 @@ public:
                         OopClosure* oc) :
     _dcto_cl(dcto_cl), _g1(g1), _oc(oc) { }
 
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)        { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
@@ -213,6 +215,7 @@ class FilterOutOfRegionClosure: public ExtendedOopClosure {
   OopClosure* _oc;
 public:
   FilterOutOfRegionClosure(HeapRegion* r, OopClosure* oc);
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p) { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
@@ -227,6 +230,7 @@ private:
   CMTask*            _task;
 public:
   G1CMOopClosure(G1CollectedHeap* g1h, ConcurrentMark* cm, CMTask* task);
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(      oop* p) { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
@@ -242,6 +246,7 @@ public:
   G1RootRegionScanClosure(G1CollectedHeap* g1h, ConcurrentMark* cm,
                           uint worker_id) :
     _g1h(g1h), _cm(cm), _worker_id(worker_id) { }
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(      oop* p) { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
@@ -257,6 +262,7 @@ class G1Mux2Closure : public ExtendedOopClosure {
   OopClosure* _c2;
 public:
   G1Mux2Closure(OopClosure *c1, OopClosure *c2);
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)        { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
@@ -269,6 +275,7 @@ class G1TriggerClosure : public ExtendedOopClosure {
   bool _triggered;
 public:
   G1TriggerClosure();
+  static const bool oop_virt_iter = false;
   bool triggered() const { return _triggered; }
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)        { do_oop_nv(p); }
@@ -283,6 +290,7 @@ class G1InvokeIfNotTriggeredClosure: public ExtendedOopClosure {
   OopClosure* _oop_cl;
 public:
   G1InvokeIfNotTriggeredClosure(G1TriggerClosure* t, OopClosure* oc);
+  static const bool oop_virt_iter = false;
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(oop* p)        { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
@@ -302,7 +310,7 @@ public:
                                 OopsInHeapRegionClosure* push_ref_cl,
                                 bool record_refs_into_cset,
                                 int worker_i = 0);
-
+  static const bool oop_virt_iter = false;
   void set_from(HeapRegion* from) {
     assert(from != NULL, "from region must be non-NULL");
     _from = from;

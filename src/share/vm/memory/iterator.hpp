@@ -68,6 +68,7 @@ class OopClosure : public Closure {
 // pollute the OopClosure interface.
 class ExtendedOopClosure : public OopClosure {
  public:
+  static const bool oop_virt_iter = true;
   ReferenceProcessor* _ref_processor;
   ExtendedOopClosure(ReferenceProcessor* rp) : _ref_processor(rp) { }
   ExtendedOopClosure() : OopClosure(), _ref_processor(NULL) { }
@@ -113,6 +114,7 @@ class NoHeaderExtendedOopClosure : public ExtendedOopClosure {
   OopClosure* _wrapped_closure;
  public:
   NoHeaderExtendedOopClosure(OopClosure* cl) : _wrapped_closure(cl) {}
+  static const bool oop_virt_iter = false;
   // Warning: this calls the virtual version do_oop in the the wrapped closure.
   void do_oop_nv(oop* p)       { _wrapped_closure->do_oop(p); }
   void do_oop_nv(narrowOop* p) { _wrapped_closure->do_oop(p); }
