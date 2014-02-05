@@ -1435,10 +1435,11 @@ void LIRGenerator::post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val) {
       G1SATBCardTableModRef_post_barrier(addr,  new_val);
       break;
 #endif // INCLUDE_ALL_GCS
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
+    case 10000:
       CardTableModRef_post_barrier(addr,  new_val);
       break;
+    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableExtension:
     case BarrierSet::ModRef:
     case BarrierSet::Other:
       // No post barriers

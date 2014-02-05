@@ -1591,11 +1591,12 @@ void GraphKit::post_barrier(Node* ctl,
       g1_write_barrier_post(store, obj, adr, adr_idx, val, bt, use_precise);
       break;
 
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
+    case 10000:
       write_barrier_post(store, obj, adr, adr_idx, val, use_precise);
       break;
 
+    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableExtension:
     case BarrierSet::ModRef:
       break;
 

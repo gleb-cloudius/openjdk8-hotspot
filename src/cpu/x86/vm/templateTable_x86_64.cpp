@@ -174,8 +174,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
       }
       break;
 #endif // INCLUDE_ALL_GCS
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
+    case 10000:
       {
         if (val == noreg) {
           __ store_heap_oop_null(obj);
@@ -191,6 +190,8 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
         }
       }
       break;
+    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableExtension:
     case BarrierSet::ModRef:
     case BarrierSet::Other:
       if (val == noreg) {

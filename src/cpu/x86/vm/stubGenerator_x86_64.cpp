@@ -1243,8 +1243,7 @@ class StubGenerator: public StubCodeGenerator {
           __ popa();
         }
         break;
-      case BarrierSet::CardTableModRef:
-      case BarrierSet::CardTableExtension:
+      case 10000:
         {
           CardTableModRefBS* ct = (CardTableModRefBS*)bs;
           assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
@@ -1266,6 +1265,9 @@ class StubGenerator: public StubCodeGenerator {
           __ decrement(count);
           __ jcc(Assembler::greaterEqual, L_loop);
         }
+        break;
+      case BarrierSet::CardTableModRef:
+      case BarrierSet::CardTableExtension:
         break;
       default:
         ShouldNotReachHere();
