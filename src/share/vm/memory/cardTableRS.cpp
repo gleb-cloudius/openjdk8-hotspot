@@ -103,6 +103,7 @@ void CardTableRS::prepare_for_younger_refs_iterate(bool parallel) {
     // Find a parallel value to be used next.
     jbyte next_val = find_unused_youngergenP_card_value();
     set_cur_youngergen_card_val(next_val);
+    printf("set youngergen_card to %d\n", next_val);
 
   } else {
     // In an sequential traversal we will always write youngergen, so that

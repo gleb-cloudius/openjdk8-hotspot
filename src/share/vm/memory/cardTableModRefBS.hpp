@@ -157,6 +157,7 @@ class CardTableModRefBS: public ModRefBarrierSet {
                    " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
                    p, _whole_heap.start(), _whole_heap.end()));
     jbyte* result = &byte_map_base[uintptr_t(p) >> card_shift];
+    //fprintf(stderr, "byte_for: byte_map_base=%p, p=%p result=%p\n", byte_map_base, p, result);
     assert(result >= _byte_map && result < _byte_map + _byte_map_size,
            "out of bounds accessor for card marking array");
     return result;
@@ -262,7 +263,7 @@ class CardTableModRefBS: public ModRefBarrierSet {
 public:
   // Constants
   enum SomePublicConstants {
-    card_shift                  = 9,
+    card_shift                  = 12,
     card_size                   = 1 << card_shift,
     card_size_in_words          = card_size / sizeof(HeapWord)
   };

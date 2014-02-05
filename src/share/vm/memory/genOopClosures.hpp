@@ -56,7 +56,7 @@ class OopsInGenClosure : public ExtendedOopClosure {
   CardTableRS* _rs;           // remembered set
 
   // For assertions
-  Generation* generation() { return _gen; }
+
   CardTableRS* rs() { return _rs; }
 
   // Derived classes that modify oops so that they might be old-to-young
@@ -72,7 +72,7 @@ class OopsInGenClosure : public ExtendedOopClosure {
 
   OopsInGenClosure(Generation* gen);
   void set_generation(Generation* gen);
-
+  Generation* generation() { return _gen; }
   void reset_generation() { _gen = _orig_gen; }
 
   // Problem with static closures: must have _gen_boundary set at some point,

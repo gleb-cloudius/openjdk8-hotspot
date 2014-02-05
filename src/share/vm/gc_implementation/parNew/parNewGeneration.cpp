@@ -165,12 +165,21 @@ void ParScanThreadState::trim_queues(int max_size) {
               obj_to_scan->forwardee() != obj_to_scan) {
             scan_partial_array_and_push_remainder(obj_to_scan);
           } else {
+            printf("scan to_space level=%d %p %p %s must be youngest=%d \n", _to_space_closure.generation()->level(),
+                _to_space_closure.generation()->reserved().start(),
+                _to_space_closure.generation()->reserved().end(),
+                obj_to_scan->klass()->external_name(), _to_space_closure.generation()->must_be_youngest());
             // object is in to_space
             obj_to_scan->oop_iterate(&_to_space_closure);
           }
         } else {
-          // object is in old generation
+          printf("scan old_gen level=%d %p %p %s must be oldest=%d\n", _old_gen_closure.generation()->level(),
+              _old_gen_closure.generation()->reserved().start(),
+              _old_gen_closure.generation()->reserved().end(),
+              obj_to_scan->klass()->external_name(), _old_gen_closure.generation()->must_be_oldest());
+        	// object is in old generation
           obj_to_scan->oop_iterate(&_old_gen_closure);
+
         }
       }
     }

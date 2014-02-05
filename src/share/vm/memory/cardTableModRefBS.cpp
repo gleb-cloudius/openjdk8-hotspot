@@ -605,6 +605,8 @@ MemRegion CardTableModRefBS::dirty_card_range_after_reset(MemRegion mr,
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) {
+      if (reset_val == precleaned_card)
+        printf("preclean from %p to %x\n", mri.start(), mri.end());
       jbyte* cur_entry, *next_entry, *limit;
       for (cur_entry = byte_for(mri.start()), limit = byte_for(mri.last());
            cur_entry <= limit;
@@ -623,6 +625,8 @@ MemRegion CardTableModRefBS::dirty_card_range_after_reset(MemRegion mr,
               cur_entry[i] = reset_val;
             }
           }
+          if (reset_val == precleaned_card)
+            printf("precleaned from %p to %x\n", cur_cards.start(), cur_cards.end());
           return cur_cards;
         }
       }

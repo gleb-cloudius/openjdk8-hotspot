@@ -3797,6 +3797,7 @@ bool CMSCollector::markFromRoots(bool asynch) {
     CMSPhaseAccounting pa(this, "mark", !PrintGCDetails);
     res = markFromRootsWork(asynch);
     if (res) {
+      printf("set )collectorState to Precleaning");
       _collectorState = Precleaning;
     } else { // We failed and a foreground collection wants to take over
       assert(_foregroundGCIsActive, "internal state inconsistency");
